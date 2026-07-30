@@ -1,0 +1,29 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Data & Models (Không đưa file dữ liệu nặng lên Git)
+data/raw/*
+data/processed/*
+data/external/*
+!data/**/.gitkeep
+models/*.pt
+models/*.pkl
+models/*.h5
+
+# Logs & Config
+logs/
+*.log
+.env
+
+# VS Code settings
+.vscode/

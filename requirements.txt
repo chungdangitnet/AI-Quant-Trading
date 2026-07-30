@@ -1,0 +1,56 @@
+# Core System & Utilities
+python-dotenv>=1.0.1
+pydantic>=2.6.0
+tqdm>=4.66.0
+loguru>=0.7.2
+
+# Data Processing & Analysis
+numpy>=1.26.0
+pandas>=2.2.0
+scipy>=1.12.0
+statsmodels>=0.14.1
+
+# Data Acquisition
+yfinance>=0.2.36
+binance-connector>=3.5.0
+alpha_vantage>=2.3.1
+requests>=2.31.0
+
+# Technical Indicators
+ta>=0.11.0
+pandas-ta>=0.3.14b0
+
+# Machine Learning & Optimization
+scikit-learn>=1.4.0
+xgboost>=2.0.3
+lightgbm>=4.3.0
+catboost>=1.2.2
+optuna>=3.5.0
+
+# Deep Learning & Transformers (Phiên bản tương thích CUDA 12.x)
+torch>=2.2.0
+torchvision>=0.17.0
+torchaudio>=2.2.0
+tensorflow>=2.15.0
+
+# Explainable AI
+shap>=0.44.0
+lime>=0.2.0.1
+
+# Visualization
+matplotlib>=3.8.0
+seaborn>=0.13.0
+plotly>=5.18.0
+
+# Backtesting & Quantitative
+backtrader>=1.9.76.123
+PyPortfolioOpt>=1.5.5
+
+# Web API & Dashboard
+fastapi>=0.109.0
+uvicorn>=0.27.0
+streamlit>=1.31.0
+
+# Interactive Environment
+jupyter>=1.0.0
+ipykernel>=6.29.0
