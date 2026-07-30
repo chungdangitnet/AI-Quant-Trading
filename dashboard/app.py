@@ -51,17 +51,13 @@ if result is not None:
             return 'background-color: #f8d7da; color: red; font-weight: bold;'
         return ''
 
-    # Tương thích với các phiên bản Pandas mới, kèm định dạng làm tròn 2 chữ số thập phân
+    # Tương thích với các phiên bản Pandas mới
     if hasattr(df_report.style, 'map'):
-        styled_df = (df_report.style
-                     .map(highlight_signals, subset=['Signal'])
-                     .format({"Confidence (%)": "{:.2f}", "Price ($)": "{:.2f}"}))
+        styled_df = df_report.style.map(highlight_signals, subset=['Signal'])
     else:
-        styled_df = (df_report.style
-                     .applymap(highlight_signals, subset=['Signal'])
-                     .format({"Confidence (%)": "{:.2f}", "Price ($)": "{:.2f}"}))
+        styled_df = df_report.style.applymap(highlight_signals, subset=['Signal'])
 
-    st.dataframe(styled_df, use_container_width=True, height=400)
+    st.dataframe(styled_df, width='stretch', height=400)
 else:
     st.warning("⚠️ Chưa tìm thấy báo cáo nào! Hãy chạy file `python deployment/daily_scanner.py` trước.")
 
