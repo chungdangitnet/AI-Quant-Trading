@@ -28,10 +28,10 @@ catboost>=1.2.2
 optuna>=3.5.0
 
 # Deep Learning & Transformers (Phiên bản tương thích CUDA 12.x)
-torch>=2.2.0
-torchvision>=0.17.0
-torchaudio>=2.2.0
-tensorflow>=2.15.0
+#torch>=2.2.0
+#torchvision>=0.17.0
+#torchaudio>=2.2.0
+#tensorflow>=2.15.0
 
 # Explainable AI
 shap>=0.44.0
