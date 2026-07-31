@@ -165,3 +165,130 @@ class FinancialEDA:
         plt.grid(True, linestyle='-', alpha=0.5)
         plt.tight_layout()
         plt.show()
+    def plot_rsi_vs_profit(self, period=60, rsi_period=14, step=10):
+        """
+        Tính chỉ báo RSI, làm tròn theo bước 'step' (ví dụ: 10, 20, 30...) 
+        và vẽ biểu đồ tương quan với Lợi nhuận chu kỳ N ngày.
+        """
+        df_plot = self.df.copy()
+        
+        # 1. Tính chỉ báo RSI 14 phiên chuẩn
+        delta = df_plot['Close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=rsi_period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=rsi_period).mean()
+        
+        rs = gain / loss
+        df_plot['RSI'] = 100 - (100 / (1 + rs))
+        
+        # 2. Làm tròn RSI về mốc bội số của 'step' (mặc định bước 10 -> 10, 20, 30, 40, 50, 60, 70)
+        df_plot['RSI_Rounded'] = (df_plot['RSI'] / step).round() * step
+        
+        # 3. Tính Lợi nhuận tích lũy chu kỳ N ngày (%)
+        df_plot['Rolling_Profit'] = (df_plot['Close'] - df_plot['Close'].shift(period)) / df_plot['Close'].shift(period) * 100
+        
+        # Bỏ dữ liệu NaN
+        df_plot = df_plot.dropna(subset=['RSI_Rounded', 'Rolling_Profit'])
+        
+        # 4. Vẽ biểu đồ Scatter Plot giống hệt hình ảnh mẫu
+        plt.figure(figsize=(10, 6))
+        plt.scatter(
+            df_plot['RSI_Rounded'], 
+            df_plot['Rolling_Profit'], 
+            color='purple', 
+            s=8, 
+            alpha=0.4, 
+            edgecolors='none'
+        )
+        
+        plt.title(f"Tương quan RSI làm tròn và Lợi Nhuận chu kỳ {period} ngày", fontsize=14, fontweight="bold")
+        plt.xlabel("RSI", fontsize=11)
+        plt.ylabel("Lợi Nhuận (%)", fontsize=11)
+        plt.grid(True, linestyle='-', alpha=0.5)
+        
+        # Đặt mốc trục X cố định theo đúng các khoảng RSI
+        ticks = range(10, 80, step)
+        plt.xticks(ticks)
+        
+        plt.tight_layout()
+        plt.show()
+    def plot_macd_signal_vs_profit(self, period=60, signal_period=9):
+        """
+        Tính đường Tín hiệu MACD (MACD Signal) và vẽ biểu đồ tương quan 
+        với Lợi nhuận chu kỳ N ngày.
+        """
+        df_plot = self.df.copy()
+        
+        # 1. Tính đường MACD (EMA12 - EMA26)
+        ema_12 = df_plot['Close'].ewm(span=12, adjust=False).mean()
+        ema_26 = df_plot['Close'].ewm(span=26, adjust=False).mean()
+        macd = ema_12 - ema_26
+        
+        # 2. Tính đường MACD Signal (EMA9 của MACD)
+        df_plot['MACD_Signal'] = macd.ewm(span=signal_period, adjust=False).mean()
+        
+        # 3. Tính Lợi nhuận tích lũy chu kỳ N ngày (%)
+        df_plot['Rolling_Profit'] = (df_plot['Close'] - df_plot['Close'].shift(period)) / df_plot['Close'].shift(period) * 100
+        
+        # Bỏ dữ liệu NaN
+        df_plot = df_plot.dropna(subset=['MACD_Signal', 'Rolling_Profit'])
+        
+        # 4. Vẽ biểu đồ Scatter Plot giống hệt ảnh mẫu
+        plt.figure(figsize=(10, 6))
+        plt.scatter(
+            df_plot['MACD_Signal'], 
+            df_plot['Rolling_Profit'], 
+            color='purple', 
+            s=8, 
+            alpha=0.5, 
+            edgecolors='none'
+        )
+        
+        # Cấu hình tiêu đề & nhãn trục
+        plt.title(f"Tương quan MACD Signal và Lợi Nhuận chu kỳ {period} ngày", fontsize=14, fontweight="bold")
+        plt.xlabel("MACD Signal", fontsize=11)
+        plt.ylabel("Lợi Nhuận (%)", fontsize=11)
+        plt.axhline(0, color='black', linestyle='--', linewidth=0.8, alpha=0.7)
+        plt.axvline(0, color='black', linestyle='--', linewidth=0.8, alpha=0.7)
+        plt.grid(True, linestyle='-', alpha=0.5)
+        
+        plt.tight_layout()
+        plt.show()
+    def plot_year_vs_profit(self, period=60):
+        """
+        Trích xuất Năm từ Index và vẽ biểu đồ tương quan 
+        với Lợi nhuận chu kỳ N ngày.
+        """
+        df_plot = self.df.copy()
+        
+        # 1. Trích xuất Năm từ DatetimeIndex
+        df_plot['Year'] = df_plot.index.year
+        
+        # 2. Tính Lợi nhuận tích lũy chu kỳ N ngày (%)
+        df_plot['Rolling_Profit'] = (df_plot['Close'] - df_plot['Close'].shift(period)) / df_plot['Close'].shift(period) * 100
+        
+        # Bỏ dữ liệu NaN
+        df_plot = df_plot.dropna(subset=['Year', 'Rolling_Profit'])
+        
+        # 3. Vẽ biểu đồ Scatter Plot giống hệt ảnh mẫu
+        plt.figure(figsize=(10, 6))
+        plt.scatter(
+            df_plot['Year'], 
+            df_plot['Rolling_Profit'], 
+            color='purple', 
+            s=8, 
+            alpha=0.4, 
+            edgecolors='none'
+        )
+        
+        # Cấu hình giao diện & nhãn
+        plt.title(f"Tương quan giữa Năm và Lợi Nhuận chu kỳ {period} ngày", fontsize=14, fontweight="bold")
+        plt.xlabel("Year", fontsize=11)
+        plt.ylabel("profit", fontsize=11)
+        plt.grid(True, linestyle='-', alpha=0.5)
+        
+        # Ép trục X hiển thị đúng các số năm nguyên (2017, 2018, 2019...)
+        years = sorted(df_plot['Year'].unique())
+        plt.xticks(years)
+        
+        plt.tight_layout()
+        plt.show()
