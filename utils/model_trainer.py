@@ -63,3 +63,35 @@ class ModelTrainer:
         
         logger.info("Hoàn tất huấn luyện mô hình.")
         return model, metrics
+    def train_xgboost(self, X_train, y_train, X_test, y_test, **kwargs):
+        """
+        Huấn luyện mô hình XGBoost.
+        Hỗ trợ truyền các tham số siêu tham số (Hyperparameters) thông qua **kwargs
+        """
+        from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+        import xgboost as xgb
+        
+        # Khởi tạo mô hình, truyền toàn bộ cấu hình từ **kwargs vào XGBClassifier
+        model = xgb.XGBClassifier(
+            random_state=42, 
+            eval_metric='logloss',
+            **kwargs  # BÍ QUYẾT LÀ Ở ĐÂY: Chấp nhận mọi tham số truyền vào
+        )
+        
+        # Huấn luyện mô hình
+        model.fit(X_train, y_train)
+        
+        # Dự đoán
+        y_pred = model.predict(X_test)
+        y_prob = model.predict_proba(X_test)[:, 1]
+        
+        # Đánh giá Metrics
+        metrics = {
+            'Accuracy': accuracy_score(y_test, y_pred),
+            'Precision': precision_score(y_test, y_pred, zero_division=0),
+            'Recall': recall_score(y_test, y_pred, zero_division=0),
+            'F1 Score': f1_score(y_test, y_pred, zero_division=0),
+            'ROC-AUC': roc_auc_score(y_test, y_prob)
+        }
+        
+        return model, metrics

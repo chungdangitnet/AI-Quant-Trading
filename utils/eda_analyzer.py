@@ -292,3 +292,48 @@ class FinancialEDA:
         
         plt.tight_layout()
         plt.show()
+    def plot_stoch_k_vs_profit(self, period=60, k_period=14, step=10):
+        """
+        Tính chỉ báo Stochastic %K (14 phiên), làm tròn theo bước 'step' 
+        và vẽ biểu đồ tương quan với Lợi nhuận chu kỳ N ngày.
+        """
+        df_plot = self.df.copy()
+        
+        # 1. Tính chỉ báo Stochastic Oscillator %K
+        low_min = df_plot['Low'].rolling(window=k_period).min()
+        high_max = df_plot['High'].rolling(window=k_period).max()
+        
+        df_plot['Stoch_K'] = 100 * ((df_plot['Close'] - low_min) / (high_max - low_min))
+        
+        # 2. Làm tròn Stoch_K về mốc bội số của 'step' (0, 10, 20, ..., 100)
+        df_plot['Stoch_K_Rounded'] = (df_plot['Stoch_K'] / step).round() * step
+        
+        # 3. Tính Lợi nhuận tích lũy chu kỳ N ngày (%)
+        df_plot['Rolling_Profit'] = (df_plot['Close'] - df_plot['Close'].shift(period)) / df_plot['Close'].shift(period) * 100
+        
+        # Bỏ dữ liệu NaN
+        df_plot = df_plot.dropna(subset=['Stoch_K_Rounded', 'Rolling_Profit'])
+        
+        # 4. Vẽ biểu đồ Scatter Plot
+        plt.figure(figsize=(10, 6))
+        plt.scatter(
+            df_plot['Stoch_K_Rounded'], 
+            df_plot['Rolling_Profit'], 
+            color='purple', 
+            s=8, 
+            alpha=0.4, 
+            edgecolors='none'
+        )
+        
+        # Cấu hình giao diện & nhãn
+        plt.title(f"Tương quan Stoch_K làm tròn và Lợi Nhuận chu kỳ {period} ngày", fontsize=14, fontweight="bold")
+        plt.xlabel("Stoch_K", fontsize=11)
+        plt.ylabel("Lợi Nhuận (%)", fontsize=11)
+        plt.grid(True, linestyle='-', alpha=0.5)
+        
+        # Đặt mốc trục X cố định từ 0 đến 100
+        ticks = range(0, 110, step)
+        plt.xticks(ticks)
+        
+        plt.tight_layout()
+        plt.show()
