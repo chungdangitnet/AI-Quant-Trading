@@ -66,8 +66,13 @@ class FinancialEDA:
             print("Cảnh báo: DataFrame cần chứa cột 'Day_of_Week' và 'Log_Return'.")
             return
 
+        # TỰ ĐỘNG CHUYỂN ĐỔI: Nếu cột đang là số (0-4), ánh xạ sang chữ
+        if pd.api.types.is_numeric_dtype(self.df["Day_of_Week"]):
+            day_mapping = {0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday", 4: "Friday", 5: "Saturday", 6: "Sunday"}
+            self.df["Day_of_Week"] = self.df["Day_of_Week"].map(day_mapping)
+
         day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-        valid_days = [d for d in day_order if d in self.df["Day_of_Week"].unique()]
+        valid_days = [d for d in day_order if d in self.df["Day_of_Week"].dropna().unique()]
 
         # 1. Chuẩn bị dữ liệu theo đúng thứ tự ngày trong tuần
         days_data = [
@@ -75,9 +80,14 @@ class FinancialEDA:
             for day in valid_days
         ]
 
+        if not days_data:
+            print("Lỗi: Không tìm thấy dữ liệu ngày hợp lệ để phân tích.")
+            return
+
         # 2. Vẽ Boxplot bằng Matplotlib
         plt.figure(figsize=(10, 6))
-        plt.boxplot(days_data, tick_labels=valid_days, patch_artist=True, boxprops=dict(facecolor="lightblue"))
+        # Đã sửa 'tick_labels' thành 'labels' để không bị lỗi trên Matplotlib mới
+        plt.boxplot(days_data, labels=valid_days, patch_artist=True, boxprops=dict(facecolor="lightblue"))
         plt.title("Phân phối Lợi nhuận theo Các Ngày trong Tuần", fontsize=14, fontweight="bold")
         plt.ylabel("Log Return")
         plt.grid(True, linestyle="--", alpha=0.5)
@@ -97,8 +107,8 @@ class FinancialEDA:
 
         # Đánh giá dựa trên Kruskal-Wallis (ưu tiên do Log Return không chuẩn)
         if p_val_kruskal > alpha:
-            print(f"1. Nhận xét: p-value > {alpha} ở cả 2 kiểm định ANOVA và Kruskal-Wallis.")
-            print("2. Giải thích: Không có bằng chứng thống kê cho thấy trung bình lợi nhuận giữa các ngày có sự khác biệt rõ rệt.")
+            print(f"1. Nhận xét: p-value > {alpha} ở kiểm định Kruskal-Wallis.")
+            print("2. Giải thích: Không có bằng chứng thống kê cho thấy trung bình lợi nhuận giữa các ngày có sự khác biệt.")
             print("3. Ý nghĩa: Hiệu ứng 'Day-of-the-Week' (ví dụ: Monday Effect) không đủ mạnh để khai thác.")
             print("4. Kết luận: KHÔNG NÊN dựa vào yếu tố Ngày trong tuần làm tín hiệu giao dịch độc lập.")
         else:
@@ -108,3 +118,50 @@ class FinancialEDA:
             print("4. Kết luận: CÓ THỂ cân nhắc kết hợp biến Ngày trong tuần làm Feature phụ trợ cho mô hình ML.")
         
         print("=" * 80 + "\n")
+    def plot_day_of_year_vs_profit(self, period=60):
+        """
+        Vẽ biểu đồ Tương quan giữa Ngày trong năm (Day of Year) và Lợi nhuận chu kỳ N ngày.
+        """
+        df_plot = self.df.copy()
+        
+        # Trích xuất Ngày trong năm từ DatetimeIndex
+        df_plot['Day_of_Year'] = df_plot.index.dayofyear
+        
+        # Tính Lợi nhuận tích lũy chu kỳ N ngày (%)
+        df_plot['Rolling_Profit'] = (df_plot['Close'] - df_plot['Close'].shift(period)) / df_plot['Close'].shift(period) * 100
+        df_plot = df_plot.dropna(subset=['Rolling_Profit'])
+        
+        plt.figure(figsize=(10, 6))
+        plt.scatter(df_plot['Day_of_Year'], df_plot['Rolling_Profit'], color='purple', s=6, alpha=0.6, edgecolors='none')
+        plt.title(f"Tương quan giữa Ngày và Lợi Nhuận chu kỳ {period} ngày", fontsize=14, fontweight="bold")
+        plt.xlabel("Day of year", fontsize=11)
+        plt.ylabel("Profit (%)", fontsize=11)
+        plt.grid(True, linestyle='-', alpha=0.5)
+        plt.tight_layout()
+        plt.show()
+
+    def plot_macd_vs_profit(self, period=60):
+        """
+        Vẽ biểu đồ Tương quan giữa MACD và Lợi nhuận chu kỳ N ngày.
+        """
+        df_plot = self.df.copy()
+        
+        # Tính MACD (EMA12 - EMA26)
+        ema_12 = df_plot['Close'].ewm(span=12, adjust=False).mean()
+        ema_26 = df_plot['Close'].ewm(span=26, adjust=False).mean()
+        df_plot['MACD'] = ema_12 - ema_26
+        
+        # Tính Lợi nhuận tích lũy chu kỳ N ngày (%)
+        df_plot['Rolling_Profit'] = (df_plot['Close'] - df_plot['Close'].shift(period)) / df_plot['Close'].shift(period) * 100
+        df_plot = df_plot.dropna(subset=['MACD', 'Rolling_Profit'])
+        
+        plt.figure(figsize=(10, 6))
+        plt.scatter(df_plot['MACD'], df_plot['Rolling_Profit'], color='purple', s=8, alpha=0.5, edgecolors='none')
+        plt.title(f"Tương quan MACD và Lợi Nhuận chu kỳ {period} ngày", fontsize=14, fontweight="bold")
+        plt.xlabel("MACD", fontsize=11)
+        plt.ylabel("Lợi Nhuận (%)", fontsize=11)
+        plt.axhline(0, color='black', linestyle='--', linewidth=0.8, alpha=0.7)
+        plt.axvline(0, color='black', linestyle='--', linewidth=0.8, alpha=0.7)
+        plt.grid(True, linestyle='-', alpha=0.5)
+        plt.tight_layout()
+        plt.show()
